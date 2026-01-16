@@ -20,6 +20,9 @@ import java.util.Date
 import java.util.Locale
 import java.text.SimpleDateFormat
 import android.util.Log
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.withTimeout
 
 
 class TaskDetailActivity : AppCompatActivity() {
@@ -126,14 +129,27 @@ class TaskDetailActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
+            buttonSave.isEnabled = false    // 後に活用
             lifecycleScope.launch {
                 val repo = FirestoreRepository()
-                repo.updateTitle(taskId, newTitle)
-                repo.updateMemo(taskId, newMemo)
-                repo.updateDueAt(taskId, dueAt)
-                repo.updateDone(taskId, done)
+                try {
+                    // オフライン時はFirestoreはローカルに保存のため、awaitでUIを待たせないよう一定時間で打ち切る設計
+                    withTimeout(1500L) {
+                        repo.updateTask(taskId, newTitle, newMemo, dueAt, done)
+                    }
+                    toast("保存しました")
+                    finish()
+                } catch(e:TimeoutCancellationException) {
+                    toast("オフラインの可能性があります。接続後に同期されます")
+                    finish()
+                } catch(e:CancellationException) {  // 正常なキャンセルルート
+                    throw e     //
+                } catch(e:Exception) {              // その他例外エラー
+                        Log.e("TaskDetail", "save failed in TaskDetailActivity", e)
+                        toast("保存に失敗しました。通信状態を確認してください")
+                        buttonSave.isEnabled = true     // 後に活用
+                }
             }
-            finish()
         }
     }
 
@@ -182,6 +198,6 @@ class TaskDetailActivity : AppCompatActivity() {
 
     // トーストをまとめる
     private fun toast(msg: String) {
-        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
     }
 }

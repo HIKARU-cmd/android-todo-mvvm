@@ -17,16 +17,15 @@ import com.example.todoapp.ui.TaskViewModel
 import kotlinx.coroutines.launch
 import com.google.firebase.auth.FirebaseAuth
 
-class MainActivity : AppCompatActivity() {  // AppCompatActivityクラスを継承、Androidの基本的な画面操作が使える
+class MainActivity : AppCompatActivity() {
 
-    private lateinit var adapter:TaskAdapter    // :TaskAdapterでTaskAdapter.ktのクラスを参照　lateinit「後から初期化する」という宣言、55行目で初期化している
-    private var currentRows: List<Task> = emptyList()   // Taskオブジェクトの空リストを作成している、Task.kt に定義された Task クラスに紐づく
-    private val viewModel: TaskViewModel by viewModels()    // : TaskViewModelクラスを使う、by viewModels()は簡単に初期化して使うためにkotlinの便利な書き方 内部ではViewModelProviderを呼び出し処理している
+    private lateinit var adapter:TaskAdapter
+    private val viewModel: TaskViewModel by viewModels()
     private var showCompleted: Boolean = false
     private  var latestRows: List<Task> = emptyList()
 
-    override fun onCreate(savedInstanceState: Bundle?) {    // onCreateはこの画面が初めて表示されるときに実行される処理、？はnullを許容、overrideはスーパークラス(AppCompatActivity)で定義されている関数を上書きするという意味
-        super.onCreate(savedInstanceState)                  // superはスーパークラスを指す、つまりスーパークラスのonCreateを呼び出している。Androidの画面として正常に動作するための準備をスーパークラスに任せる部分
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
         FirebaseAuth.getInstance().signInAnonymously()      // 未ログインの場合、匿名認証を実施する
 
         setContentView(R.layout.activity_main)
@@ -70,7 +69,7 @@ class MainActivity : AppCompatActivity() {  // AppCompatActivityクラスを継�
         // タスク長押し処理
         tasklist.setOnItemLongClickListener { _, _, position, _ ->
             handleLongClick(position)
-            true //trueを返して処理が完了したということを、返している
+            true
         }
     }
 
@@ -116,6 +115,6 @@ class MainActivity : AppCompatActivity() {  // AppCompatActivityクラスを継�
 
     // トーストをまとめる
     private fun toast(msg: String) {
-        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
     }
 }

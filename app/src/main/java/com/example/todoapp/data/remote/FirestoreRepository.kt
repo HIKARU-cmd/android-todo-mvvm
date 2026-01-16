@@ -52,18 +52,18 @@ class FirestoreRepository (
         col().document().set(data).await()
     }
 
-    suspend fun updateTitle(id:String, title:String) {
-        col().document(id).update("title", title).await()
+    // 詳細画面ではまとめて保存とする。一部更新やオフライン時の不整合を防ぐため
+    suspend fun updateTask(id:String, title:String, memo:String, dueAt:Long?, done:Boolean) {
+        val update = hashMapOf<String, Any?>(
+            "title" to title,
+            "memo" to memo,
+            "dueAt" to dueAt,
+            "done" to done
+        )
+        col().document(id).update(update).await()
     }
 
-    suspend fun updateMemo(id:String, memo:String) {
-        col().document(id).update("memo", memo).await()
-    }
-
-    suspend fun updateDueAt(id:String, dueAt:Long?) {
-        col().document(id).update("dueAt", dueAt).await()
-    }
-
+    // 完了フラグは軽量捜査のため、即時保存としている。UX向上のため詳細画面の保存設計（まとめて保存）とは分けている。
     suspend fun updateDone(id:String, done:Boolean) {
         col().document(id).update("done", done).await()
     }
