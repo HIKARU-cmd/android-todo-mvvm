@@ -4,11 +4,19 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.todoapp.data.Task
 import com.example.todoapp.data.remote.FirestoreRepository
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 
-// TaskViewModel.ktはデータの橋渡し役、UI(画面）とDBのやりとりを綺麗にわけるために存在
+sealed class SaveResult {
+    data object Success: SaveResult()
+    data object Timeout: SaveResult()
+    data class Error(val throwable: Throwable): SaveResult()
+}
+
 class TaskViewModel(
     private val repo: FirestoreRepository = FirestoreRepository()
 ) : ViewModel() {
@@ -23,8 +31,8 @@ class TaskViewModel(
     }
 
 
-    fun add(title: String) = viewModelScope.launch {                        // add関数が呼ばれたら、バックグラウンドでタスクをDBに保存する処理を開始する
-        if(title.isBlank()) return@launch                                   // タスク名が空ならこのコルーチンから抜ける
+    fun add(title: String) = viewModelScope.launch {
+        if(title.isBlank()) return@launch
         repo.add(title)
     }
 
@@ -34,5 +42,22 @@ class TaskViewModel(
 
     fun updateDone(id: String, done: Boolean) = viewModelScope.launch {
         repo.updateDone(id, done)
+    }
+
+    // UI(詳細画面)が「成功、タイムアウト、失敗」で分岐して画面遷移するためsuspendで結果を返す
+    suspend fun taskSave(id: String, title:String, memo:String, dueAt:Long?, done: Boolean
+    ) :SaveResult {
+        return try {
+            withTimeout(1500L) {
+                repo.updateTask(id, title, memo, dueAt,done)
+            }
+            SaveResult.Success
+        } catch (e: TimeoutCancellationException) {
+            SaveResult.Timeout
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            SaveResult.Error(e)
+        }
     }
 }
