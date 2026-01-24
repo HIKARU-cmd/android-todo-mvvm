@@ -20,6 +20,9 @@ import java.util.Date
 import java.util.Locale
 import java.text.SimpleDateFormat
 import android.util.Log
+import androidx.activity.viewModels
+import com.example.todoapp.ui.SaveResult
+import com.example.todoapp.ui.TaskViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withTimeout
@@ -63,6 +66,8 @@ class TaskDetailActivity : AppCompatActivity() {
     private var taskId: String = ""
     private var dueAt: Long? = null
     private var done: Boolean = false
+
+    private val viewModel: TaskViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -131,23 +136,22 @@ class TaskDetailActivity : AppCompatActivity() {
 
             buttonSave.isEnabled = false    // 後に活用
             lifecycleScope.launch {
-                val repo = FirestoreRepository()
-                try {
-                    // オフライン時はFirestoreはローカルに保存のため、awaitでUIを待たせないよう一定時間で打ち切る設計
-                    withTimeout(1500L) {
-                        repo.updateTask(taskId, newTitle, newMemo, dueAt, done)
+                when(val result =
+                    viewModel.taskSave(taskId, newTitle, newMemo, dueAt, done)
+                ) {
+                    SaveResult.Success -> {
+                        toast("保存しました")
+                        finish()
                     }
-                    toast("保存しました")
-                    finish()
-                } catch(e:TimeoutCancellationException) {
-                    toast("オフラインの可能性があります。接続後に同期されます")
-                    finish()
-                } catch(e:CancellationException) {  // 正常なキャンセルルート
-                    throw e     //
-                } catch(e:Exception) {              // その他例外エラー
-                        Log.e("TaskDetail", "save failed in TaskDetailActivity", e)
+                    SaveResult.Timeout -> {
+                        toast("オフラインの可能性があります。接続後に同期されます")
+                        finish()
+                    }
+                    is SaveResult.Error -> {
+                        Log.e("TaskDetail", "save failed", result.throwable)
                         toast("保存に失敗しました。通信状態を確認してください")
-                        buttonSave.isEnabled = true     // 後に活用
+                        buttonSave.isEnabled = true
+                    }
                 }
             }
         }
