@@ -73,6 +73,13 @@ class TaskDetailActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_task_detail)
 
+        setupActionBar()
+        bindViews()
+        loadFromIntent()
+        render()
+        setupListeners()
+
+
         // 戻るボタン
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
@@ -140,6 +147,7 @@ class TaskDetailActivity : AppCompatActivity() {
                     viewModel.taskSave(taskId, newTitle, newMemo, dueAt, done)
                 ) {
                     SaveResult.Success -> {
+                        Log.d("TaskSave", "result = $result")
                         toast("保存しました")
                         finish()
                     }
@@ -156,6 +164,12 @@ class TaskDetailActivity : AppCompatActivity() {
             }
         }
     }
+
+    private fun setupActionBar() {}
+    private fun bindViews() {}
+    private fun loadFromIntent() {}
+    private fun render() {}
+    private fun setupListeners() {}
 
     // 期限表示用のフォーマット
     private val dateFormat = SimpleDateFormat("yyyy/MM/dd", Locale.JAPAN)
