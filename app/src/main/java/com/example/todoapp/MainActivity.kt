@@ -73,6 +73,8 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+
+
     // タスク追加処理
     private fun handleAddTask(taskInput: EditText) {
         val text = taskInput.text.toString().trim()

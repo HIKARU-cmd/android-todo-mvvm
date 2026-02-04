@@ -69,21 +69,41 @@ class TaskDetailActivity : AppCompatActivity() {
 
     private val viewModel: TaskViewModel by viewModels()
 
+
+    // intentから取り出した値の入れ物
+    private data class TaskArgs(
+        val taskId: String,
+        val title: String,
+        val memo: String,
+        val dueAt: Long?,
+        val done: Boolean
+    )
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_task_detail)
 
         setupActionBar()
         bindViews()
-        loadFromIntent()
-        render()
+
+        val args = loadFromIntent()
+        taskId = args.taskId
+        dueAt = args.dueAt
+        done = args.done
+
+        render(args)
         setupListeners()
 
+    }
 
-        // 戻るボタン
+
+    // 戻るボタン
+    private fun setupActionBar() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
+    }
 
-        // ViewをfindViewById
+    // ViewをfindViewById
+    private fun bindViews() {
         editTitle = findViewById(R.id.editTitle)
         editMemo = findViewById(R.id.editMemo)
         textDue = findViewById(R.id.textDue)
@@ -91,9 +111,11 @@ class TaskDetailActivity : AppCompatActivity() {
         buttonClearDue = findViewById(R.id.buttonClearDue)
         buttonSave = findViewById(R.id.buttonSave)
         checkDone = findViewById(R.id.checkDone)
+    }
 
-        // Intentから値を取り出す
-        taskId = intent.getStringExtra(EXTRA_TASK_ID) ?: ""
+    // Intentから値を取り出す
+    private fun loadFromIntent(): TaskArgs {
+        val taskId = intent.getStringExtra(EXTRA_TASK_ID) ?: ""
         val title = intent.getStringExtra(EXTRA_TITLE) ?: ""
         val memo = intent.getStringExtra(EXTRA_MEMO) ?: ""
         dueAt = if (intent.hasExtra(EXTRA_DUE_AT)) {
@@ -101,14 +123,26 @@ class TaskDetailActivity : AppCompatActivity() {
         } else {
             null
         }
-         done = intent.getBooleanExtra(EXTRA_DONE, false)
+        done = intent.getBooleanExtra(EXTRA_DONE, false)
 
-        // 画面へ反映
-        editTitle.setText(title)
-        editMemo.setText(memo)
+        return TaskArgs(
+            taskId = taskId,
+            title = title,
+            memo = memo,
+            dueAt = dueAt,
+            done = done
+        )
+    }
+
+    // 画面へ反映
+    private fun render(args: TaskArgs) {
+        editTitle.setText(args.title)
+        editMemo.setText(args.memo)
         checkDone.isChecked = done
         textDue.text = formatDueText(dueAt)
+    }
 
+    private fun setupListeners() {
         // 完了フラグの変更
         checkDone.setOnCheckedChangeListener {_, ischecked ->   // 保存ボタンでfirebaseに保存する仕様
             done = ischecked
@@ -129,47 +163,42 @@ class TaskDetailActivity : AppCompatActivity() {
             toast("期限をクリアしました")
         }
 
-
         // 保存ボタン
         buttonSave.setOnClickListener {
-            val newTitle = editTitle.text.toString().trim()
-            val newMemo = editMemo.text.toString().trim()
+            onclickSave()
+        }
+    }
 
-            val error = validateInput(newTitle, newMemo)
-            if (error != null) {
-                toast(error)
-                return@setOnClickListener
-            }
+    private fun onclickSave() {
+        val newTitle = editTitle.text.toString().trim()
+        val newMemo = editMemo.text.toString().trim()
 
-            buttonSave.isEnabled = false    // 後に活用
-            lifecycleScope.launch {
-                when(val result =
-                    viewModel.taskSave(taskId, newTitle, newMemo, dueAt, done)
-                ) {
-                    SaveResult.Success -> {
-                        Log.d("TaskSave", "result = $result")
-                        toast("保存しました")
-                        finish()
-                    }
-                    SaveResult.Timeout -> {
-                        toast("オフラインの可能性があります。接続後に同期されます")
-                        finish()
-                    }
-                    is SaveResult.Error -> {
-                        Log.e("TaskDetail", "save failed", result.throwable)
-                        toast("保存に失敗しました。通信状態を確認してください")
-                        buttonSave.isEnabled = true
-                    }
+        val error = validateInput(newTitle, newMemo)
+        if (error != null) {
+            toast(error)
+            return
+        }
+
+        buttonSave.isEnabled = false    // 後に活用
+        lifecycleScope.launch {
+            when(val result =
+                viewModel.taskSave(taskId, newTitle, newMemo, dueAt, done)
+            ) {
+                SaveResult.Success -> {
+                    toast("保存しました")
+                    finish()
+                }
+                SaveResult.Timeout -> {
+                    toast("オフラインの可能性があります。接続後に同期されます")
+                    finish()
+                }
+                is SaveResult.Error -> {
+                    toast("保存に失敗しました。通信状態を確認してください")
+                    buttonSave.isEnabled = true
                 }
             }
         }
     }
-
-    private fun setupActionBar() {}
-    private fun bindViews() {}
-    private fun loadFromIntent() {}
-    private fun render() {}
-    private fun setupListeners() {}
 
     // 期限表示用のフォーマット
     private val dateFormat = SimpleDateFormat("yyyy/MM/dd", Locale.JAPAN)
