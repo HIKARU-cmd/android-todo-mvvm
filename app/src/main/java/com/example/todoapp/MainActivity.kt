@@ -73,11 +73,13 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+
+
     // タスク追加処理
     private fun handleAddTask(taskInput: EditText) {
         val text = taskInput.text.toString().trim()
         when {
-            text.isBlank() -> { toast("タスクを入力してください",)
+            text.isBlank() -> { toast("タスクを入力してください")
                 return
             }
             text.length > 50 -> {
