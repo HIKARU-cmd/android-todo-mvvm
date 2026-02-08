@@ -4,7 +4,6 @@ import android.app.DatePickerDialog
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.os.PersistableBundle
 import android.widget.Button
 import android.widget.CheckBox
 import android.widget.EditText
@@ -13,7 +12,6 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.todoapp.data.Task
-import com.example.todoapp.data.remote.FirestoreRepository
 import kotlinx.coroutines.launch
 import java.util.Calendar
 import java.util.Date
@@ -23,10 +21,6 @@ import android.util.Log
 import androidx.activity.viewModels
 import com.example.todoapp.ui.SaveResult
 import com.example.todoapp.ui.TaskViewModel
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.withTimeout
-
 
 class TaskDetailActivity : AppCompatActivity() {
 
@@ -134,7 +128,7 @@ class TaskDetailActivity : AppCompatActivity() {
         )
     }
 
-    // 画面へ反映
+    // 詳細画面遷移後の画面描画
     private fun render(args: TaskArgs) {
         editTitle.setText(args.title)
         editMemo.setText(args.memo)
@@ -144,8 +138,8 @@ class TaskDetailActivity : AppCompatActivity() {
 
     private fun setupListeners() {
         // 完了フラグの変更
-        checkDone.setOnCheckedChangeListener {_, ischecked ->   // 保存ボタンでfirebaseに保存する仕様
-            done = ischecked
+        checkDone.setOnCheckedChangeListener {_,isChecked->   // 保存ボタンでfirebaseに保存する仕様
+            done = isChecked
         }
 
         // 期限変更ボタン　
@@ -193,6 +187,7 @@ class TaskDetailActivity : AppCompatActivity() {
                     finish()
                 }
                 is SaveResult.Error -> {
+                    Log.d("TaskDetail", "save failed", result.throwable)
                     toast("保存に失敗しました。通信状態を確認してください")
                     buttonSave.isEnabled = true
                 }
