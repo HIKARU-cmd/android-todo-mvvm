@@ -31,6 +31,15 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/taskInput" />
 
+    <Button
+        android:id="@+id/buttonImportSample"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="サンプル取り込み"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/addButton"/>
+
     <TextView
         android:id="@+id/hintText"
         android:layout_width="wrap_content"
@@ -38,7 +47,7 @@
         android:text="※タスクのクリックで編集画面へ遷移、長押しで削除ができます"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/addButton" />
+        app:layout_constraintTop_toBottomOf="@+id/buttonImportSample" />
 
     <androidx.appcompat.widget.SwitchCompat
         android:id="@+id/switchShowCompleted"

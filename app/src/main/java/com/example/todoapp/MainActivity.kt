@@ -16,6 +16,7 @@ import com.example.todoapp.data.Task
 import com.example.todoapp.ui.TaskViewModel
 import kotlinx.coroutines.launch
 import com.google.firebase.auth.FirebaseAuth
+import com.example.todoapp.ui.ImportResult
 
 class MainActivity : AppCompatActivity() {
 
@@ -33,6 +34,7 @@ class MainActivity : AppCompatActivity() {
         val taskInput: EditText = findViewById(R.id.taskInput)
         val tasklist: ListView = findViewById(R.id.tasklist)
         val addButton: Button = findViewById(R.id.addButton)
+        val buttonImportSample: Button = findViewById(R.id.buttonImportSample)
         val switchShowCompleted: SwitchCompat = findViewById(R.id.switchShowCompleted)
         switchShowCompleted.isChecked = showCompleted
         switchShowCompleted.setOnCheckedChangeListener { _, isChecked ->
@@ -58,6 +60,11 @@ class MainActivity : AppCompatActivity() {
         // タスク追加
         addButton.setOnClickListener {
             handleAddTask(taskInput)
+        }
+
+        // サンプルタスク追加
+        buttonImportSample.setOnClickListener {
+            onClickImportSample()
         }
 
         // タスククリック処理
@@ -89,6 +96,29 @@ class MainActivity : AppCompatActivity() {
         }
         viewModel.add(text)
         taskInput.text.clear()
+    }
+
+    // サンプルタスク追加処理（jsonplaceholderサーバーへAPI通信）
+    private fun onClickImportSample() {
+        lifecycleScope.launch {
+            when(val result = viewModel.importSampleTask()) {
+                is ImportResult.Success -> {
+                    Log.d("SampleImport", "title=${result.title}")
+                    Log.d("SampleImport", "memo=${result.memo}")
+                    Log.d("SampleImport", "done=${result.done}")
+                }
+                ImportResult.Timeout -> {
+                    toast("タイムアウトになりました")
+                }
+                ImportResult.Empty -> {
+                    toast("データ取得できませんでした")
+                }
+                is ImportResult.Error -> {
+                    Log.e("SampleImport", "import failed", result.throwable)
+                    toast("通信に失敗しました")
+                }
+            }
+        }
     }
 
     // タスク長押し処理

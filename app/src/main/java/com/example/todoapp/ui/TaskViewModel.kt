@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
+import com.example.todoapp.data.remote.JsonPlaceholderRepository
+import kotlinx.coroutines.withTimeout
 
 sealed class SaveResult {
     data object Success: SaveResult()
@@ -18,7 +20,8 @@ sealed class SaveResult {
 }
 
 class TaskViewModel(
-    private val repo: FirestoreRepository = FirestoreRepository()
+    private val repo: FirestoreRepository = FirestoreRepository(),
+    private val jsonPlaceholderRepository: JsonPlaceholderRepository = JsonPlaceholderRepository()
 ) : ViewModel() {
 
     // tasks:Flowの設計図 tasks = 「observeAll → map → List<Task>」という設計図
@@ -58,6 +61,34 @@ class TaskViewModel(
             throw e
         } catch (e: Exception) {
             SaveResult.Error(e)
+        }
+    }
+
+    suspend fun importSampleTask(): ImportResult {
+        return try {
+            withTimeout(3000L) {
+                val todos = jsonPlaceholderRepository.getTodos()
+                val posts = jsonPlaceholderRepository.getPosts()
+
+                if(todos.isEmpty() || posts.isEmpty()) {
+                    return@withTimeout ImportResult.Empty
+                }
+
+                val todo = todos.first()
+                val post = posts.first()
+
+                ImportResult.Success(
+                    title = todo.title,
+                    memo = post.body,
+                    done = todo.completed
+                )
+            }
+        } catch (e: TimeoutCancellationException) {
+            ImportResult.Timeout
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            ImportResult.Error(e)
         }
     }
 }
