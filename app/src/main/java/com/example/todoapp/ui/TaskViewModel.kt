@@ -64,6 +64,7 @@ class TaskViewModel(
         }
     }
 
+    // jsonplaceholderサーバーよりサンプルタスクを取得
     suspend fun importSampleTask(): ImportResult {
         return try {
             withTimeout(3000L) {
@@ -89,6 +90,24 @@ class TaskViewModel(
             throw e
         } catch (e: Exception) {
             ImportResult.Error(e)
+        }
+    }
+
+    // firestoreへサンプルタスクを保存
+    suspend fun importAndSaveSampleTask(): ImportResult {
+        return when(val result = importSampleTask()) {
+            is ImportResult.Success -> {
+                repo.addTask(
+                    title = result.title,
+                    memo = result.memo,
+                    done = result.done,
+                    dueAt = null
+                )
+                result
+            }
+            ImportResult.Timeout -> ImportResult.Timeout
+            ImportResult.Empty -> ImportResult.Empty
+            is ImportResult.Error -> result
         }
     }
 }

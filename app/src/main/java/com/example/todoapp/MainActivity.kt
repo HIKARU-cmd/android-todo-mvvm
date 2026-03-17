@@ -101,11 +101,9 @@ class MainActivity : AppCompatActivity() {
     // サンプルタスク追加処理（jsonplaceholderサーバーへAPI通信）
     private fun onClickImportSample() {
         lifecycleScope.launch {
-            when(val result = viewModel.importSampleTask()) {
+            when(val result = viewModel.importAndSaveSampleTask()) {
                 is ImportResult.Success -> {
-                    Log.d("SampleImport", "title=${result.title}")
-                    Log.d("SampleImport", "memo=${result.memo}")
-                    Log.d("SampleImport", "done=${result.done}")
+                    toast("サンプルタスクを取り込みました")
                 }
                 ImportResult.Timeout -> {
                     toast("タイムアウトになりました")

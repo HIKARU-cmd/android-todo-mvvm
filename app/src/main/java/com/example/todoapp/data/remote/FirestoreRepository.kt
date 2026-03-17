@@ -52,6 +52,25 @@ class FirestoreRepository (
         col().document().set(data).await()
     }
 
+    // サンプルタスク追加(jsonplaceholderサーバーへAPI通信)
+    suspend fun addTask(
+        title: String,
+        memo: String,
+        done: Boolean,
+        dueAt: Long? = null
+    ) {
+        val now = System.currentTimeMillis()
+
+        val data = hashMapOf(
+            "title" to title,
+            "memo" to memo,
+            "done" to done,
+            "dueAt" to dueAt,
+            "createdAt" to now
+        )
+        col().document().set(data).await()
+    }
+
     // 詳細画面ではまとめて保存とする。一部更新やオフライン時の不整合を防ぐため
     suspend fun updateTask(id:String, title:String, memo:String, dueAt:Long?, done:Boolean) {
         val update = hashMapOf<String, Any?>(
